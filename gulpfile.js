@@ -11,7 +11,7 @@ var cssmin = require('gulp-cssmin');
 
 // rev 
 gulp.task('rev_append', function() {
-  gulp.src('.')
+  gulp.src('./*.html')
     .pipe(rev())
     .pipe(gulp.dest('.'));
 });
