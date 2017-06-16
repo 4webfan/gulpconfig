@@ -1,65 +1,117 @@
-var gulp = require('gulp');
-var rename = require("gulp-rename");
-var prefix = require('gulp-autoprefixer');
-var livereload = require('gulp-livereload');
-var connect = require('gulp-connect');
-var rev = require('gulp-rev-append');
-var less = require('gulp-less');
-var concat = require('gulp-concat');
-var csscomb = require('gulp-csscomb');
-var cssmin = require('gulp-cssmin');
+// +---------- install string -----------+
+// install global gulp and browsersync
+// npm i -g browser-sync
+// npm i -g gulp
+// npm i gulp gulp-rev-append gulp-rename gulp-autoprefixer gulp-less gulp-csscomb gulp-cssmin gulp-plumber gulp-notify browser-sync gulp-sourcemaps
+// 1. main    | npm i gulp gulp-rev-append gulp-rename gulp-csscomb gulp-cssmin gulp-plumber gulp-notify browser-sync gulp-sourcemaps
+// 2. less    | npm i gulp-autoprefixer gulp-less 
+// 3. pug     | npm i gulp-pug
+// 4. postcss | npm i gulp-postCss autoprefixer postcss-nested postcss-short postcss-assets
+// +--------- required plugins ----------+
+var gulp        = require('gulp');
 
-// rev 
-gulp.task('rev_append', function() {
-  gulp.src('./*.html')
-    .pipe(rev())
-    .pipe(gulp.dest('.'));
+// make revision or appending a query-string file hash
+var rev         = require('gulp-rev-append');
+
+// onErrors plugins
+var plumber     = require('gulp-plumber');
+var notify      = require('gulp-notify');
+
+// browser sync
+var browserSync = require('browser-sync').create();
+var reload      = browserSync.reload;
+
+// sourcemaps
+var sourcemaps  = require('gulp-sourcemaps');
+
+// +--------------------------------------+
+// css + less
+var rename      = require("gulp-rename");
+var prefix      = require('gulp-autoprefixer');
+var less        = require('gulp-less');
+var csscomb     = require('gulp-csscomb');
+var cssmin      = require('gulp-cssmin');
+
+// +--------------------------------------+
+// pug
+//var pug = require('gulp-pug');
+
+// +--------------------------------------+
+// postCss
+var postcss       = require('gulp-postCss');
+var autoprefixer  = require('autoprefixer');
+var postCssNested = require('postcss-nested');
+var postcssShort  = require('postcss-short');
+var postcssAssets = require('postcss-assets');
+
+// +-------------- tasks -----------------+ 
+// + -------------------------------------+
+// serve - main task
+gulp.task('serve', ['cssmin'], function() {
+
+    browserSync.init({
+        server: "./"
+    });
+
+    gulp.watch("./css/less/*.less", ['cssmin']);
+    //gulp.watch("./pug/*.pug", ['pug']);                       // compiled pug files
+    //gulp.watch("./css/innercss/*.css", ['postcss']);          // compiled pug files
+    gulp.watch("./*.html").on('change', browserSync.reload);    // reload for change .html files
+    //gulp.watch(".js/*.js").on('change', browserSync.reload);  // reload for change .js files
 });
 
-// connect
-gulp.task('connect', function() {
-  connect.server({
-    root: '.',
-    livereload: true
-  });
-});
-
-// csscomb
-gulp.task('csscomb', function(){
-    return gulp.src('css/less/**/*.less')
-            .pipe(prefix({browsers: ['last 5 version'], cascade: false}))
-            .pipe(csscomb())
-            .pipe(gulp.dest('css/less/'))
-});
 // less
 gulp.task('less', function(){
-	return gulp.src('css/less/**/*.less')
-		.pipe(concat('styles.less'))
-    	.pipe(less('styles.less'))
-    	.pipe(gulp.dest('css/'))
-    	//.pipe(connect.reload());
+	return gulp.src('./css/less/styles.less')
+			.pipe(plumber({
+				errorHandler: notify.onError()
+			}))
+      //.pipe(sourcemaps.init())
+      .pipe(less('./css/less/styles.less'))
+      .pipe(prefix({browsers: ['last 5 version'], cascade: false}))
+      .pipe(csscomb())
+      //.pipe(sourcemaps.write())
+      .pipe(gulp.dest('./css/'))
+      .pipe(browserSync.stream());
 });
 
-// css
-gulp.task('css', ['csscomb', 'less'], function (){
-  gulp.src('css/styles.css')
-    .pipe(cssmin())
-    .pipe(rename({suffix: '.min'}))
-    .pipe(gulp.dest('css/'))
-    .pipe(connect.reload());
+// make styles.min.css
+gulp.task('cssmin', ['less'], function(){
+	return gulp.src('./css/styles.css')
+		    .pipe(cssmin())
+		    .pipe(rename({suffix: '.min'}))
+		    .pipe(gulp.dest('./css/'))
+	    	.pipe(browserSync.stream());
 });
 
-// html 
-gulp.task('html', function(){
-	gulp.src('**/*.html')
-	.pipe(connect.reload());
-});
+// compile pug
+/*gulp.task('pug', function() {
+  return gulp.src("./pug/*.pug")
+      .pipe(pug({
+          //basedir: __dirname,
+          pretty: true
+      }))
+      .pipe(gulp.dest("./"))
+      .pipe(browserSync.stream());
+});*/
 
-// watch
-gulp.task('watch', function(){
-	gulp.watch('css/less/**/*.less', ['css'])
-	//gulp.watch('css/**/*.css', ['css'])
-	gulp.watch('./**/*.html', ['html'])
+/*
+gulp.task('postcss', function () {
+    var plugins = [
+        postCssNested,
+        postcssShort,
+        postcssAssets({
+          loadPaths: ['src/assets/'],
+          relativeTo: 'css/'
+        }),
+        autoprefixer({browsers: ['last 2 version']})
+    ];
+    return gulp.src('./css/innercss/styles.css')
+        .pipe(postcss(plugins))
+        .pipe(rename('styleOut.css'))
+        .pipe(gulp.dest('./css/'));
+        .pipe(browserSync.stream());
 });
+*/
 
-gulp.task('default', ['connect', 'html', 'css', 'rev_append',  'watch']);
+gulp.task('default', ['serve']);

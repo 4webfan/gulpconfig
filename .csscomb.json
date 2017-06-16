@@ -5,9 +5,9 @@
     "block-indent": "  ",
     "color-shorthand": true,
     "element-case": "lower",
-    "eof-newline": true,
+    "eof-newline": false,
     "leading-zero": false,
-    "quotes": "single",
+    "quotes": "double",
     "sort-order-fallback": "abc",
     "space-before-colon": "",
     "space-after-colon": " ",
@@ -21,6 +21,6 @@
     "space-before-closing-brace": "\n",
     "strip-spaces": true,
     "tab-size": true,
-    "vendor-prefix-align": true,
-    "sort-order": ["..."]
+    "unitless-zero": true,
+    "vendor-prefix-align": true
 }
